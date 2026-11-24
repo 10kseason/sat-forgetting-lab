@@ -24,6 +24,31 @@ def projected_value(system, fixed):
     return cnf_value(system.goals, tuple(fixed) + system.greatest(fixed))
 
 
+@dataclass(frozen=True)
+class UnaryExactness:
+    exact: bool
+    clauses: tuple
+    counterexample: tuple | None
+
+
+def unary_exactness(system):
+    """Recognize exact unary CNF in at most n+2 evaluations of the monotone projection."""
+    literals = orientation(system)
+    top = tuple(v > 0 for v in literals)
+    if not projected_value(system, top):
+        return UnaryExactness(True, ((),), None)
+    units = set()
+    for i, v in enumerate(literals):
+        missing = list(top)
+        missing[i] = not top[i]
+        if not projected_value(system, missing):
+            units.add(v)
+    least = tuple((v > 0) == (v in units) for v in literals)
+    exact = projected_value(system, least)
+    return UnaryExactness(exact, tuple((v,) for v in literals if v in units),
+                          None if exact else least)
+
+
 def binary_envelope(system):
     """Compute the strongest width-at-most-two consequences of the monotone part."""
     oriented = orientation(system)

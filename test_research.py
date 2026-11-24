@@ -4,9 +4,11 @@ import random
 import unittest
 from itertools import combinations, product
 
-from binary_envelope import binary_envelope, decide_with_envelope, projected_value, recognition_instance
+from binary_envelope import (binary_envelope, decide_with_envelope, orientation, projected_value,
+                             recognition_instance, unary_exactness)
 from examples import dense_guarded, matching_instance
 from forgetting import HiddenCNF, cnf_value
+from round_certificate import certify_binary_rounds
 from two_sat import solve_2cnf
 
 
@@ -106,6 +108,66 @@ class ResearchTests(unittest.TestCase):
                 mismatch = any(cnf_value(env,x) and not projected_value(s,x)
                                for x in assignments(s.retained))
                 self.assertEqual(mismatch,sat)
+
+    def test_unary_recognition_including_constants_and_signed_directions(self):
+        pool = [(1, -2), (1,), (-2,), (), (-3, 1), (-3, -2), (3,)]
+        for keep in assignments(len(pool)):
+            s = HiddenCNF(2, 1, [c for c, use in zip(pool, keep) if use])
+            result = unary_exactness(s)
+            exact = all(cnf_value(result.clauses, x) == projected_value(s, x) for x in assignments(2))
+            self.assertEqual(result.exact, exact)
+            if not exact:
+                self.assertTrue(cnf_value(result.clauses, result.counterexample))
+                self.assertFalse(projected_value(s, result.counterexample))
+        relative = HiddenCNF(2, 0, [(1, 2)], [(1, 2)])
+        self.assertFalse(unary_exactness(relative).exact)
+        self.assertTrue(all(cnf_value(relative.background, x) == (relative.extend(x) is not None)
+                            for x in assignments(2)))
+
+    def test_round_certificate_random_signed(self):
+        rng = random.Random(4721)
+        for _ in range(160):
+            literals, heads = (1, -2, 3, -4), (5, 6, 7, 8)
+            def tail():
+                return tuple(rng.sample(literals, rng.randrange(4)) + rng.sample(heads, rng.randrange(3)))
+            clauses = [(-h, *tail()) for h in heads for _ in range(rng.randrange(3))]
+            s = HiddenCNF(4, 4, clauses + [tail(), tail()])
+            cert = certify_binary_rounds(s)
+            if cert.clauses is not None:
+                for x in assignments(4):
+                    self.assertEqual(projected_value(s, x), cnf_value(cert.clauses, x))
+            else:
+                self.assertGreater(len(cert.wide_prime), 2)
+                # A minimum-width remaining clause is prime in its *reported* stage.
+                def reported(x):
+                    cur = (True,) * len(heads)
+                    for _ in range(cert.rounds):
+                        cur = tuple(cnf_value(s.rules[h], x + cur) for h in heads)
+                    if cert.failed_head is None:
+                        return cnf_value(s.goals, x + cur)
+                    return cur[cert.failed_head - 5]
+                o = orientation(s)
+                witness = tuple((v > 0) != (v in cert.wide_prime) for v in o)
+                self.assertFalse(reported(witness))
+                for v in cert.wide_prime:
+                    raised = list(witness)
+                    raised[abs(v)-1] = v > 0
+                    self.assertTrue(reported(tuple(raised)))
+
+    def test_transient_wide_head_and_policy_cost(self):
+        # The final output is a; at round 2, h has the prime clause (a,b,c).
+        # h=4, q1=5, q2=6, k=7, p=8, r=9.
+        s = HiddenCNF(3, 6, [(-4,5,6),(-4,7),(-5,1,2),(-6,3),(-7,8),(-8,9),(-9,1),(4,)])
+        result = certify_binary_rounds(s)
+        self.assertEqual((result.rounds, result.failed_head, result.wide_prime), (2, 4, (1,2,3)))
+        self.assertTrue(all(projected_value(s,x) == x[0] for x in assignments(3)))
+        k = 8
+        bounds = [(-2*k-i, 2*i-1, 2*i) for i in range(1,k+1)]
+        bounds += [(-2*k-i,2*k+i-1) for i in range(2,k+1)]
+        s = HiddenCNF(2*k, k, bounds + [(3*k,)])
+        self.assertEqual(s.project().policies_examined, 2**(k-1))
+        self.assertEqual(certify_binary_rounds(s).clauses,
+                         tuple((2*i-1,2*i) for i in range(1,k+1)))
 
 
 if __name__ == "__main__":

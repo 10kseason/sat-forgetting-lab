@@ -34,16 +34,19 @@ private def slot {n} : Wire n → Fin 3
   | .guard i => i
   | .rail _ _ => 0
 
+private theorem freshGuard {n} (a b : Wire n) :
+    ∃ k : Fin 3, a ≠ .guard k ∧ b ≠ .guard k := by
+  have spare : ∀ i j : Fin 3, ∃ k : Fin 3, k ≠ i ∧ k ≠ j := by decide
+  obtain ⟨k, ha, hb⟩ := spare (slot a) (slot b)
+  exact ⟨k, fun e => ha (by rw [e]; rfl), fun e => hb (by rw [e]; rfl)⟩
+
 theorem envelope_eq_matching {n} (φ : Formula n) (x : Input n) :
     envelope (encoded φ) x ↔ matching x := by
   constructor
   · intro h i
     exact h (.rail i true) (.rail i false) (fun _ hy => hy.1 i)
   · intro hx a b entails
-    have spare : ∀ i j : Fin 3, ∃ k : Fin 3, k ≠ i ∧ k ≠ j := by decide
-    obtain ⟨k, ha, hb⟩ := spare (slot a) (slot b)
-    have hka : a ≠ Wire.guard k := fun e => ha (by rw [e]; rfl)
-    have hkb : b ≠ Wire.guard k := fun e => hb (by rw [e]; rfl)
+    obtain ⟨k, hka, hkb⟩ := freshGuard a b
     let y : Input n := fun w => if w = .guard k then true else x w
     have hy : encoded φ y := by
       refine ⟨?_, Or.inl ⟨k, by simp [y]⟩⟩
@@ -100,5 +103,55 @@ theorem exact_iff_unsat {n} (φ : Formula n) :
     refine ⟨?_, fun h => h.1⟩
     intro hm
     exact Classical.byContradiction (fun h => unsat ((counterexample_iff_sat φ).mp ⟨x,hm,h⟩))
+
+/-- A signed binary clause, including units by repetition. An empty clause
+cannot occur in a representation of encoded, since the all-true input satisfies it. -/
+abbrev PairClause (n : Nat) := (Wire n × Bool) × (Wire n × Bool)
+
+def signedModel {n} (D : List (PairClause n)) (x : Input n) : Prop :=
+  ∀ p ∈ D, x p.1.1 = p.1.2 ∨ x p.2.1 = p.2.2
+
+private def matchPairs (n : Nat) : List (PairClause n) :=
+  (List.finRange n).map (fun i => ((.rail i true, true), (.rail i false, true)))
+
+private theorem matchPairs_model {n} (x : Input n) :
+    signedModel (matchPairs n) x ↔ matching x := by
+  simp [matchPairs, signedModel, matching]
+
+theorem signed_representable_iff_unsat {n} (φ : Formula n) :
+    (∃ D, ∀ x, signedModel D x ↔ encoded φ x) ↔ ¬∃ σ, Satisfies φ σ := by
+  constructor
+  · rintro ⟨D, hd⟩ sat
+    obtain ⟨x, hm, bad⟩ := (counterexample_iff_sat φ).mpr sat
+    apply bad
+    apply (hd x).mp
+    intro p hp
+    obtain ⟨k, ha, hb⟩ := freshGuard p.1.1 p.2.1
+    let y : Input n := fun w => if w = .guard k then true else x w
+    have good : encoded φ y := by
+      refine ⟨?_, Or.inl ⟨k, by simp [y]⟩⟩
+      intro i
+      simpa [y] using hm i
+    simpa [y, ha, hb] using ((hd y).mpr good) p hp
+  · intro unsat
+    refine ⟨matchPairs n, ?_⟩
+    intro x
+    exact (matchPairs_model x).trans ((envelope_eq_matching φ x).symm.trans
+      ((exact_iff_unsat φ).mpr unsat x))
+
+/-- The guards make the body true on the all-true input and every input with
+one zero. With the matching as a separate background, asking whether the body
+can be dropped already encodes UNSAT. -/
+def body {n} (φ : Formula n) (x : Input n) : Prop :=
+  (∃ i, x (.guard i) = true) ∨ ∃ c ∈ φ, ∀ l ∈ c, x (.rail l.1 l.2) = true
+
+theorem relative_redundancy_iff_unsat {n} (φ : Formula n) :
+    (∀ x, matching x → body φ x) ↔ ¬∃ σ, Satisfies φ σ := by
+  constructor
+  · intro h sat
+    obtain ⟨x, hm, bad⟩ := (counterexample_iff_sat φ).mpr sat
+    exact bad ⟨hm, h x hm⟩
+  · intro unsat x hm
+    exact (((exact_iff_unsat φ).mpr unsat x).mp ((envelope_eq_matching φ x).mpr hm)).2
 
 end BinaryExactness

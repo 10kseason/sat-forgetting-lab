@@ -1,0 +1,10 @@
+name = "sat_forgetting_lab"
+defaultTargets = ["Formal", "Reductions"]
+
+[[lean_lib]]
+name = "Formal"
+globs = ["Formal.+"]
+
+[[lean_lib]]
+name = "Reductions"
+globs = ["Reductions.+"]

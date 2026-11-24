@@ -9,6 +9,7 @@ import sys
 from forgetting import HiddenCNF, canonical, cnf_value
 from gf2 import equations_in_cnf, one_solution, reduce_system
 from nae_cut import cut_obstruction
+from anonymous_blocks import contract, from_cnf
 from pivot_elimination import first_non_growing, minimal, recover
 from two_sat import solve_2cnf
 
@@ -86,7 +87,8 @@ def branch(n, clauses, max_patterns):
     return SearchResult("UNSAT", None, rest, tested, "backdoor")
 
 
-def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True, use_cut=True):
+def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True, use_cut=True,
+          use_blocks=True):
     if n < 0 or (max_patterns is not None and max_patterns < 1):
         raise ValueError("invalid variable count or search budget")
     original = set()
@@ -97,6 +99,29 @@ def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True, u
         c = canonical(item)
         if c is not None:
             original.add(c)
+    level = from_cnf(n, original) if use_blocks else None
+    if level is not None:
+        levels = [level]
+        while (next_level := contract(level.vertices, level.triples)) is not None:
+            levels.append(next_level)
+            level = next_level
+        core = []
+        for edge in level.triples:
+            clause = tuple(i+1 for i in edge)
+            core.extend((clause, tuple(-lit for lit in clause)))
+        answer = solve(level.vertices, core, max_patterns, use_affine=use_affine,
+                       use_elimination=use_elimination, use_cut=use_cut, use_blocks=False)
+        assignment = answer.assignment
+        retained = tuple(i-1 for i in answer.retained)
+        for layer in reversed(levels):
+            if assignment is not None:
+                assignment = layer.lift(assignment)
+            representatives = layer.representatives()
+            retained = tuple(representatives[i] for i in retained)
+        if assignment is not None and not cnf_value(original, assignment):
+            raise AssertionError("expanded assignment does not satisfy the input")
+        return SearchResult(answer.status, assignment, tuple(i+1 for i in retained),
+                            answer.assignments_tested, f"NAE block contraction / {answer.method}")
     clauses = minimal(original) if use_elimination else original
     trace = []
     while True:
@@ -155,6 +180,7 @@ def main():
     parser.add_argument("--no-affine", action="store_true", help="skip parity-block recognition")
     parser.add_argument("--no-elimination", action="store_true", help="skip non-growing resolution")
     parser.add_argument("--no-cut", action="store_true", help="skip the signed NAE cut bound")
+    parser.add_argument("--no-blocks", action="store_true", help="skip anonymous NAE block contraction")
     args = parser.parse_args()
     try:
         if args.file is None:
@@ -163,7 +189,8 @@ def main():
             with args.file.open(encoding="utf-8") as source:
                 n, clauses = read_dimacs(source)
         result = solve(n, clauses, args.max_patterns, use_affine=not args.no_affine,
-                       use_elimination=not args.no_elimination, use_cut=not args.no_cut)
+                       use_elimination=not args.no_elimination, use_cut=not args.no_cut,
+                       use_blocks=not args.no_blocks)
     except (ValueError, OSError) as error:
         parser.error(str(error))
     print(f"c method {result.method} pivots {len(result.eliminated)} retained {len(result.retained)}"

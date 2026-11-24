@@ -8,6 +8,8 @@ Write $w$ for the number of ones and $t=4n/3$ for the number of triples. In a pr
 
 A vertex can change color while preserving all triples exactly when it is never the sole representative of its color in an incident triple. The number of blocked ones is at most $a$, and the number of blocked zeros is at most $b$. Consequently the number of free ones is at least $5w-8n/3$, and the number of free zeros is at least $7n/3-5w$.
 
+Lean checks the weighted incidence count, the existence of a free vertex, preservation of every simple triple, and a whole path into the band for $n\ge15$. The regularity assumption says the list of all incidences is a permutation of four copies of the vertex list. [General path theorem](../../Formal/RegularRecolor.lean)
+
 Above $8n/15$ there is a free one to turn off; below $7n/15$ there is a free zero to turn on. Each step decreases the distance to an integer in the target interval. The same argument works whenever the interval contains an integer. Starting from a supplied proper coloring, at most $n$ flips suffice. Finding an initial proper coloring remains NP-hard on the four-matching class. The incidence-count and recoloring argument has a degree-three antecedent. [Erskine, Griggs and Širáň, Theorem 2.2](https://onlinelibrary.wiley.com/doi/full/10.1002/jcd.21773)
 
 ## The connected sharp family

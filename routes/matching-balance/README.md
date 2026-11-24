@@ -30,6 +30,8 @@ The twelve-point types have 0, 6 and 90 proper colorings, counting both members 
 
 The compressed TSV contains one representative per fifteen-point type. Its first four columns give the rounds. A triple is three hexadecimal digits for vertices 0 through 14, with a period separating triples. The remaining columns give the full model count and the four counts after dropping the indicated round. [Download 13,933 representatives](order15.tsv.gz)
 
+An optional complete solver sweep checks the 13,933 DIMACS-equivalent formulas against these counts and validates every returned assignment. The ternary incidence witness certified one SAT type. Backdoor enumeration decided 13,823 other SAT types and all 109 UNSAT types. The maximum number of assignments tried by that route was 474 on SAT and 1,024 on UNSAT. Run `python -B routes/matching-balance/verify15.py --solver` to reproduce the method counts. [Solver sweep](verify15.py)
+
 ## A single miss does not generalize
 
 Take $k$ copies of the nine-point affine plane. In the fourth round of each block open the same triple $(a_i,b_i,c_i)$ and replace it by $(a_i,b_i,c_{i+1})$ cyclically. The result is connected, linear and still has four perfect matchings. Among colorings satisfying the first three rounds, the minimum number of violations in the fourth is **$k+(k\bmod 2)$**.
@@ -38,7 +40,9 @@ Each block retains eleven internal triples on nine points. At most 20 pairs cros
 
 ## Reproduction
 
-The dual incidence hypergraph has one vertex per triple and one hyperedge per original variable, joining the four triples containing it. A proper coloring partitions the dual edges into two edge covers: each dual vertex sees both colors. The incidence counts also give a sharp bound on how unequal the two color classes can be forced to be. [Recoloring and sharp connected examples](IMBALANCE.md)
+The dual incidence hypergraph has one vertex per triple and one hyperedge per original variable, joining the four triples containing it. A proper coloring partitions the dual edges into two edge covers: each dual vertex sees both colors. The incidence counts give a sharp color-class bound. Cycle repair and damaged-block decoding test the limits of two further ways to use that structure. [Recoloring and sharp examples](IMBALANCE.md) · [Alternating cycles and phase repair](REPAIR.md) · [Damaged-block decoding](DAMAGE.md)
+
+The ternary coefficient expansion gives an independent modular check on every catalogue row. A later construction pairs easy witness recovery with large exact ordered diagrams. Over the rationals, partial assignments from weighted kernels provide a separate decision reduction. [Ternary tests](TERNARY.md) · [Ordered diagrams and hidden witnesses](DIAGRAMS.md) · [Rational incidence weights](WEIGHTS.md)
 
 Run from the repository root. The final command writes a separate copy of the full catalogue.
 

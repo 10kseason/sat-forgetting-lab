@@ -2,9 +2,15 @@
 
 [![CI](https://github.com/10kseason/sat-forgetting-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/10kseason/sat-forgetting-lab/actions/workflows/ci.yml)
 
-SAT에서 변수를 지우면서 중간 식을 작게 유지할 수 있을까? 같은 식을 작게 표현하기 어려울 때도 SAT 여부만 빠르게 판정할 수 있을까? 이 저장소는 두 질문을 구별해 실험 코드, 수학적 증명, Lean 정리로 조사한다. **P 대 NP는 미해결이다.**
+**P 대 NP는 미해결이다.** 이 저장소는 SAT에서 변수를 정확히 지울 때 식이 얼마나 커지는지, 그리고 특정 구조를 이용해 SAT를 어떻게 판정할 수 있는지 조사한다.
 
-**[모든 해가 블록마다 6대6으로 균형인 NAE 환원](MATCHING-BALANCE.md)**
+### 네 라운드 NAE
+
+각 라운드는 정점을 겹치지 않는 세 정점 묶음으로 나눈다. 적법한 NAE 색칠에서는 모든 묶음에 두 색이 나타난다.
+
+- **블록마다 6대6.** **[종이]** 모든 해에서 12정점 블록마다 두 색이 6개씩 나타난다는 약속 아래 양의 NAE-3-SAT은 NP-난해하다. 환원은 선형성과 네 완전 매칭을 보존하며 정점과 삼중항 수를 각각 네 배로 늘린다. **[Lean]** 주어진 배선에서 원래 해와 변환한 해의 일대일 대응, 그리고 블록별 균형을 확인했다. [환원과 출처](MATCHING-BALANCE.md) · [모델 대응 정리](Formal/BalancedSubstitution.lean)
+- **한 정점씩 바꾸는 색 균형.** **[Lean]** 정점이 $n\ge15$개인 3-균일 4-정규 입력에서는 주어진 적법한 색칠을 한 정점씩 적법하게 바꿔, 한 색의 크기가 $7n/15$에서 $8n/15$ 사이인 색칠에 도달한다. **[종이]** 연결된 $15k$정점 네 라운드 예에는 색의 크기가 $7k$와 $8k$인 해 두 개만 있어 이 범위가 최선이다. **[Lean]** 그 예에 쓰인 열린 15정점 블록의 32,768개 배정과 연결 규칙을 확인했다. [일반 뒤집기 정리](Formal/RegularRecolor.lean) · [블록 정리](Formal/MatchingImbalance.lean) · [최선인 범위의 증명](routes/matching-balance/IMBALANCE.md)
+- **15정점 카탈로그.** **[테스트]** 기본 판정기는 네 라운드 설계 13,933개의 전수 검산과 모두 일치했다. UNSAT은 109개였다. GF(3) 입사행렬 증인으로 SAT 한 건을 판정했고, 나머지 13,932개는 남은 변수를 분기하는 경로로 판정했다. [카탈로그와 전체 판정 재현](routes/matching-balance/README.md#complete-finite-catalogues) · [검증 코드](routes/matching-balance/verify15.py)
 
 ### 가장 짧은 실험
 
@@ -25,8 +31,7 @@ SAT에서 변수를 지우면서 중간 식을 작게 유지할 수 있을까? �
 | 소거 순서에 관계없이 중간 식을 작게 유지할 수 있는가? | **[종이]** 가드가 고정된 수의 포함 사슬로 주어지고 각 절의 본체에 리터럴이 최대 두 개면, 가드 변수를 모두 보호한 채 본체 변수만 소거하는 모든 순서에서 누적 크기가 다항식이다. **[테스트]** 작은 식에서 소거 단계별 확장 가능성을 비교했다. [증명과 검증기](routes/construction/README.md) |
 | 패리티를 표현하려면 보조 변수나 절이 얼마나 필요한가? | **[종이]** 패리티를 CNF로 표현할 때 절 수와 보조 변수 수의 교환관계를 증명했다. **[테스트]** 작은 사례에서 소거 순서와 중간 식을 검증했다. [보조 변수 하한과 검증기](routes/obstructions/README.md) |
 | 함수에 대한 질의는 얼마나 필요한가? | **[Lean]** 한 입력에서만 다른 두 함수에 결정 트리가 서로 다른 답을 내려면, 그 입력을 질의해야 한다. **[종이]** 명시적 CNF 인코딩을 숨긴 멤버십 오라클 모델에서 결정적·무작위 최적 질의 하한을 증명했다. **[테스트]** 작은 사례의 동일한 이항 외피와 무작위 최적 오차를 확인했다. [결정 트리 정리](Formal/QueryTrace.lean) · [질의 하한과 검증기](routes/query-limit/README.md) |
-| 일반 DIMACS CNF에서 판정기는 어떻게 동작하는가? | **[종이]** 기본 판정기는 NAE 블록 복원, 2-SAT, GF(2) 패리티와 부호 있는 NAE 컷 상한을 검사하고, 필요하면 절 수가 늘지 않는 소거와 dual-Horn 분기를 수행한다. 분기 횟수에 한도를 두지 않으면 SAT 여부를 결정한다. **[테스트]** 15변수 NAE 예제에서 `--no-cut`은 할당 8,192개를 시험했고, 기본 설정은 컷 상한으로 할당 시험 없이 UNSAT을 증명했다. [기본 판정기](solve_cnf.py) · [알고리즘과 분기 반례](FRONTIER.md) · [컷 검증 코드](test_nae_cut.py) |
-| 모든 해에서 블록별 균형이 보장되는 양의 NAE-3-SAT의 난이도는? | **[Lean]** 주어진 포트 배선에서 모델의 인코딩과 디코딩이 서로의 역이고, 모든 출력 모델에서 각 12정점 블록은 두 색이 6개씩이다. **[종이]** 환원은 선형성과 네 완전 매칭을 보존하고 정점 수와 삼중항 수를 각각 네 배로 늘린다. 블록별 균형이 약속된 입력의 SAT 판정은 NP-난해하다. **[테스트]** 블록의 4,096개 색칠과 작은 환원을 검사했다. [환원과 선행 연구](MATCHING-BALANCE.md) · [모델 변환 정리](Formal/BalancedSubstitution.lean) · [검증 코드](test_matching_balance.py) |
+| 일반 DIMACS CNF에서 판정기는 어떻게 동작하는가? | **[종이]** NAE 블록 복원, 2-SAT, 패리티, 컷·포리스트 검사와 GF(3) 색칠 증인을 시도한다. 필요하면 절 수가 늘지 않는 소거와 dual-Horn 분기로 판정한다. **[테스트]** 15변수 NAE 예제에서 `--no-cut`은 할당 8,192개를 시험했고, 기본 설정은 컷 상한으로 할당 시험 없이 UNSAT을 증명했다. [기본 판정기](solve_cnf.py) · [알고리즘과 분기 반례](FRONTIER.md) · [컷과 포리스트](PROBING-AND-CUTS.md) |
 | 블록과 매칭 표기를 지운 치환도 되돌릴 수 있는가? | **[종이]** 이 치환으로 만든 입력에서 정점과 삼중항 수에 선형인 작업으로 원래 NAE 입력과 동형인 구조를 복원한다. **[테스트]** 다섯 겹 치환 후 정점 번호와 절 순서를 섞은 9,216변수 입력을 할당 시험 없이 UNSAT으로 판정했고, 12,288변수 입력에서는 원래 식을 만족하는 모델을 검증했다. [복원 증명](MATCHING-BALANCE.md#can-we-undo-the-construction-after-removing-every-label) · [기본 판정기의 복원 코드](anonymous_blocks.py) · [검증 코드](test_anonymous_blocks.py) |
 | 작은 2-SAT 검사의 실패에서 무엇을 학습할 수 있는가? | **[종이]** 한두 변수의 가정으로 짧아진 절들을 2-SAT으로 검사하고, 모순이 나면 가정을 배제하는 단위·이항 함의를 학습하는 별도 프로빙 실험이다. **[테스트]** 강제 리터럴을 찾는 가젯과 서로 다른 패리티에서 학습 결과가 같은 사례를 확인했다. [프로빙과 컷 분석](PROBING-AND-CUTS.md) · [실험 API](binary_probing.py) · [검증 코드](test_binary_probing.py) |
 | 2-CNF 배경에 XOR 조건도 있으면? | **[종이]** 주어진 방향에서 단조인 함수와 XOR 랭크 `r`에 대해, 배경의 극대 모델마다 함의 그래프의 강결합 성분을 `r`개 이하로 고른 부분집합을 검사한다. 크기 `k`의 정점 덮개를 사용하면 잔존 변수 `n`개에 대해 전체 후보는 최대 $2^k\sum_{j=0}^{r}\binom{n}{j}$개다. **[테스트]** 유한 사례를 완전탐색과 비교하고 독립 검증기로 점검했다. [혼합 판정법](routes/affine-frontier/README.md) · [독립 검토](routes/obstructions/affine-frontier.md) |
@@ -43,7 +48,11 @@ python -B solver_experiment.py
 lake build
 ```
 
-일반 DIMACS 파일은 `python -B solve_cnf.py input.cnf`로 실행한다. SAT이면 모델을 출력하고 종료 코드 10을, UNSAT이면 20을 반환한다. 선택한 `--max-patterns` 예산이 먼저 소진되면 UNKNOWN을 반환한다. 비교 실행에서는 `--no-cut`으로 NAE 컷을, `--no-blocks`로 익명 블록 복원을 건너뛸 수 있다.
+일반 DIMACS 파일은 `python -B solve_cnf.py input.cnf`로 실행한다. SAT이면 모델을 출력하고 종료 코드 10을, UNSAT이면 20을 반환한다. 선택한 `--max-patterns` 예산이 먼저 소진되면 UNKNOWN을 반환한다. `--no-cut`은 전체 성분 컷, 유도 부분집합 컷과 포리스트 판정을 건너뛴다. `--no-blocks`는 익명 블록 복원을 건너뛴다.
+
+카탈로그의 색칠 수는 `python -B routes/matching-balance/verify15.py`로 재검산한다. `--solver`를 붙이면 기본 판정기로 전부 다시 검사한다. [후속 실험과 실행 명령](routes/matching-balance/README.md#reproduction)
+
+**[Lean]** 12정점 블록은 3비트 입력 여덟 개에서 원래 삼중항의 위반 여부를 내부 위반 수로 보존한다. 내부 검사 하나를 위반하면서 모든 적법한 블록 상태와 해밍 거리가 6인 배정도 확인했다. [손상 블록 분석](routes/matching-balance/DAMAGE.md) · [유한 정리](Formal/BlockDamage.lean)
 
 `lake build`에는 질의 추적 정리도 들어 있다. CI는 기본 빌드에서 Git으로 추적되는 각 Lean 소스의 컴파일 결과가 생성됐는지 확인한다. [CI 설정](.github/workflows/ci.yml)
 

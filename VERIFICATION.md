@@ -13,7 +13,12 @@ python -B routes/query-limit/check.py
 python -B routes/matching-balance/independent.py
 python -B routes/matching-balance/order12.py
 python -B routes/matching-balance/verify15.py
+python -B routes/matching-balance/dual.py
+python -B routes/matching-balance/damage.py
+python -B routes/matching-balance/ternary_check.py
+python -B routes/matching-balance/diagrams.py
 lake build
+python -B audit_lean.py
 ```
 
 | Check | Coverage |
@@ -30,10 +35,13 @@ lake build
 | Probing and cuts | Two-pin probes recover the hidden pins and stall on both parities of the triangular prism. Signed clause systems are checked against truth tables. The 15-vertex Steiner instance is run to completion under both default and legacy settings. |
 | Twelve-vertex substitution | The Lean kernel evaluates the six block states and verifies both model maps and inverses. Python checks finite SAT and UNSAT sources, four perfect matchings, incidence linearity, signed ports, and inversion on shuffled unlabeled triples. Five-level 9,216- and 12,288-variable inputs go through the default solver. |
 | Independent four-round controls | Four sizes of generated controls and an independent complete NAE search. The 12-point enumeration reproduces all three resolved types. Gray-code truth tables verify every full and single-round-deletion coloring count of the 13,933 stored 15-point representatives. The longer catalogue generator is documented in the route. |
+| Recoloring and algebraic witnesses | The general proper-flip path into the 7/15–8/15 band and finite 7:8 sharp block are checked by Lean. Its three-port links and the twelve-vertex damaged block have separate kernel checks. The GF(3) omitted-incidence calculation matches all stored model counts modulo three. |
 
 The default Lean build checks single-pivot semantics, iteration and cumulative caps, simultaneous static policies, reachability, CNF materialization, the signed binary-recognition reduction, unary exactness, maximal-support decision, the membership-query trace theorem and the semantic occurrence-path reduction. [The emission theorem](Formal/Emission.lean) assumes certificates for reachability, constant goals and coverage of choices on each goal's dependency cone. Python certificate generation is tested separately. Runtime bounds, the coding lower bound for parity and the affine rank arguments are written proofs. Numerical experiments are finite checks.
 
 On each public push the CI performs a fresh default build, checks that each tracked Lean source has a corresponding compiled module, runs unittest discovery and runs the standalone research checks above. It uses a standard Ubuntu runner without artifact or cache uploads. [Workflow](.github/workflows/ci.yml) · [GitHub runner billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
+
+The axiom audit uses Lean's transitive dependency report for imported project theorems. It accepts the standard axioms of propositional extensionality, classical choice and quotient soundness. A dependency on an unchecked proof or on a native computation axiom fails the check. [Audit script](audit_lean.py)
 
 For the larger guarded UNSAT example, `solver_experiment.py` deliberately caps the search and reports UNKNOWN. The following reproduces the completed 131,072-pattern run for the smallest size.
 

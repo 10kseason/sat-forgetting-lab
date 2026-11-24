@@ -10,6 +10,7 @@ from forgetting import HiddenCNF, canonical, cnf_value
 from gf2 import equations_in_cnf, one_solution, reduce_system
 from nae_cut import cut_obstruction, positive_nae_triples
 from near_cut import solve_near_cut
+from rainbow_nae import rainbow_witness
 from anonymous_blocks import contract, from_cnf
 from pivot_elimination import first_non_growing, minimal, recover
 from two_sat import solve_2cnf
@@ -74,6 +75,12 @@ def shortcut(n, clauses, use_affine, use_cut=True, max_patterns=None):
                 if close.status != "UNKNOWN":
                     return SearchResult(close.status,close.assignment,(),close.patterns,
                                         "NAE complement forest")
+    if use_affine:
+        triples = positive_nae_triples(clauses)
+        if triples is not None:
+            rainbow = rainbow_witness(n,triples)
+            if rainbow is not None:
+                return SearchResult("SAT",rainbow,(),0,"ternary incidence witness")
     return None
 
 
@@ -188,9 +195,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("file", nargs="?", type=Path, help="DIMACS file (defaults to stdin)")
     parser.add_argument("--max-patterns", type=int, help="stop search after this many assignments")
-    parser.add_argument("--no-affine", action="store_true", help="skip parity-block recognition")
+    parser.add_argument("--no-affine", action="store_true",
+                        help="skip parity-block recognition and the ternary incidence witness")
     parser.add_argument("--no-elimination", action="store_true", help="skip non-growing resolution")
-    parser.add_argument("--no-cut", action="store_true", help="skip the signed NAE cut bound")
+    parser.add_argument("--no-cut", action="store_true",
+                        help="skip NAE component, induced-subset and complement-forest cut checks")
     parser.add_argument("--no-blocks", action="store_true", help="skip anonymous NAE block contraction")
     args = parser.parse_args()
     try:

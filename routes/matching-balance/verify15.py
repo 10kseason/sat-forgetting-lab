@@ -5,6 +5,8 @@ from csv import DictReader
 from gzip import open as gzopen
 from itertools import combinations
 from pathlib import Path
+import argparse
+import sys
 
 
 def gray_columns():
@@ -18,7 +20,11 @@ def gray_columns():
     return [int.from_bytes(row,"little") for row in table]
 
 
-def verify(path):
+def verify(path, check_solver=False):
+    if check_solver:
+        sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+        from forgetting import cnf_value
+        from solve_cnf import solve
     cols = gray_columns()
     all_bits = (1 << (1<<15))-1
     allowed = {(a,b,c): (cols[a]^cols[b]) | (cols[b]^cols[c])
@@ -26,6 +32,7 @@ def verify(path):
     seen = set()
     histogram = Counter()
     misses = Counter()
+    methods = Counter()
     with gzopen(path,"rt",encoding="ascii",newline="") as stream:
         for row in DictReader(stream,delimiter="\t"):
             key = tuple(row[f"class{i}"] for i in range(4))
@@ -48,6 +55,14 @@ def verify(path):
             count = full.bit_count()
             assert count == int(row["colorings"])
             histogram[count] += 1
+            if check_solver:
+                formula = [tuple(sign*(v+1) for v in e) for g in groups for e in g
+                           for sign in (1,-1)]
+                result = solve(15,formula)
+                assert result.status == ("SAT" if count else "UNSAT")
+                if result.assignment is not None:
+                    assert cnf_value(formula,result.assignment)
+                methods[result.status,result.method] += 1
             for omit in range(4):
                 partial = all_bits
                 for j,mask in enumerate(masks):
@@ -71,7 +86,11 @@ def verify(path):
     assert len(seen) == 13933 and histogram[0] == 109
     print("verified designs",len(seen),"SAT",len(seen)-histogram[0],"UNSAT",histogram[0])
     print("minimum missed restored triples on UNSAT design/round pairs",sorted(misses.items()))
+    if check_solver:
+        print("default solver routes",sorted(methods.items()))
 
 
 if __name__ == "__main__":
-    verify(Path(__file__).with_name("order15.tsv.gz"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--solver",action="store_true",help="also solve and check every original CNF")
+    verify(Path(__file__).with_name("order15.tsv.gz"),parser.parse_args().solver)

@@ -60,6 +60,19 @@ def check():
     interior = [e for g in BASE for e in g if e != OPEN]
     states = [x for x in range(1<<15) if all(len({x>>v&1 for v in e})==2 for e in interior)]
     assert states == [0x3263,0x4d9c]
+    bits = [bool(states[0]>>v&1) for v in range(15)]
+    arcs = [set() for _ in bits]
+    for edge in interior:
+        source = minority(bits,edge)
+        arcs[source].update(set(edge)-{source})
+    for root in range(15):
+        reached = {root}
+        queue = [root]
+        for v in queue:
+            fresh = arcs[v]-reached
+            reached.update(fresh)
+            queue.extend(fresh)
+        assert len(reached)==15
     for k in range(1,9):
         groups = cycle(k)
         all_pairs = [tuple(sorted(p)) for g in groups for e in g for p in combinations(e,2)]

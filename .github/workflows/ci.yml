@@ -33,6 +33,8 @@ jobs:
             fi
           done < <(git ls-files -z -- '*.lean')
           exit "$failed"
+      - name: Audit theorem axiom dependencies
+        run: python3 -B audit_lean.py
       - name: Run Python unit tests
         run: python3 -B -m unittest discover -v
       - name: Reproduce research checks
@@ -47,3 +49,6 @@ jobs:
           python3 -B routes/matching-balance/order12.py
           python3 -B routes/matching-balance/verify15.py
           python3 -B routes/matching-balance/dual.py
+          python3 -B routes/matching-balance/damage.py
+          python3 -B routes/matching-balance/ternary_check.py
+          python3 -B routes/matching-balance/diagrams.py

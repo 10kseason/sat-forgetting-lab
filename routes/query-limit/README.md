@@ -51,7 +51,7 @@ With probability $\epsilon$, answer that the oracle is punctured immediately. Ot
 
 **Worst-case expected queries.** The expected number of queries on $H$ is at least $N(p-\epsilon)\ge N(1-2\epsilon)$. With probability $\epsilon$ each, guess $H$ or a punctured oracle immediately. Otherwise scan all rows until a discrepancy appears. This uses at most $N(1-2\epsilon)$ queries in expectation on each oracle and exactly that on $H$, with error $\epsilon$ on each. No rounding is needed for expected cost.
 
-At error $1/3$, the hard cap is $N/2$ and the worst-case expected cost is $N/3$. Thus a budget of 58 rows fails for exact queries already at $n=6$, and for a hard cap with error $1/3$ at $n=7$. The query bounds concern an oracle whose representation is hidden. In the displayed CNFs the rail choices are explicit, so a procedure reading the encoding can recover the missed row directly.
+At error $1/3$, the hard cap is $N/2$ and the worst-case expected cost is $N/3$. The illustrative budget of 58 rows comes from a separate finite-graph circuit experiment. It fails for exact queries already at $n=6$, and for a hard cap with error $1/3$ at $n=7$. The query bounds concern an oracle whose representation is hidden. In the displayed CNFs the rail choices are explicit, so a procedure reading the encoding can recover the missed row directly.
 
 ## A sharp bound for satisfiability with a 2-CNF restriction
 

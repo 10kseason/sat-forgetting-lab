@@ -5,11 +5,15 @@ from itertools import product
 from forgetting import cnf_value
 from solve_cnf import hidden_orientation, read_dimacs, solve
 from gf2 import equations_in_cnf, reduce_system, one_solution
-from pivot_elimination import candidate, recover
+from pivot_elimination import candidate, minimal, recover
 from solver_experiment import guarded_pair, prism
 
 
 class SolverTests(unittest.TestCase):
+    def test_noncanonical_subsumption(self):
+        self.assertEqual(minimal([(2, 1), (1, 2), (2, -2)]), {(1, 2)})
+        self.assertEqual(minimal([(1, 1, 1), (1, 2)]), {(1,)})
+
     def test_all_three_variable_truth_tables(self):
         rows = list(product((False, True), repeat=3))
         for table in range(256):

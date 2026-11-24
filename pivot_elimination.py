@@ -4,9 +4,11 @@ from forgetting import canonical, clause_value
 
 
 def minimal(clauses):
-    """Remove duplicate and subsumed clauses. Inputs are non-tautological."""
+    """Normalize clauses and remove tautologies, duplicates and subsumed clauses."""
     kept = {}
-    for c in sorted(set(clauses), key=lambda item: (len(item), item)):
+    normalized = {canonical(clause) for clause in clauses}
+    normalized.discard(None)
+    for c in sorted(normalized, key=lambda item: (len(item), item)):
         same = frozenset(c)
         if not any(prev <= same for prev in kept.values() if len(prev) < len(same)):
             kept[c] = same

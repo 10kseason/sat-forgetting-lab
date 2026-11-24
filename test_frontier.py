@@ -10,6 +10,10 @@ from frontier_sat import conflict_graph, matching_cover, solve_frontier
 
 
 class FrontierTests(unittest.TestCase):
+    def test_single_pass_background(self):
+        clauses = (iter(clause) for clause in [(-1, -2)])
+        self.assertEqual(conflict_graph(2, clauses, (1, 2)), {1: {2}, 2: {1}})
+
     def test_every_two_variable_background_and_orientation(self):
         rows = list(product((False, True), repeat=2))
         pool = [(1,), (-1,), (2,), (-2,), (1, 2), (-1, 2), (1, -2), (-1, -2)]

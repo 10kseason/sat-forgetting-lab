@@ -1,83 +1,10 @@
-import Init.Data.List.Lemmas
+import Formal.CNF
 
 namespace SatForgetting
 
-universe u v
+universe u
 
-structure Literal (Var : Type u) where
-  var : Var
-  positive : Bool
-  deriving DecidableEq, Repr
-
-abbrev Clause (Var : Type u) := List (Literal Var)
-abbrev CNF (Var : Type u) := List (Clause Var)
-
-variable {Var : Type u} {Var' : Type v}
-
-def Literal.eval (literal : Literal Var) (valuation : Var → Bool) : Bool :=
-  if literal.positive then valuation literal.var else !(valuation literal.var)
-
-def Clause.eval (clause : Clause Var) (valuation : Var → Bool) : Bool :=
-  clause.any (fun literal => literal.eval valuation)
-
-def CNF.eval (formula : CNF Var) (valuation : Var → Bool) : Bool :=
-  formula.all (fun clause => clause.eval valuation)
-
-@[simp] theorem Clause.eval_nil (valuation : Var → Bool) :
-    Clause.eval [] valuation = false := rfl
-
-@[simp] theorem Clause.eval_cons (literal : Literal Var) (tail : Clause Var)
-    (valuation : Var → Bool) :
-    Clause.eval (literal :: tail) valuation = (literal.eval valuation || tail.eval valuation) := rfl
-
-@[simp] theorem Clause.eval_append (first second : Clause Var) (valuation : Var → Bool) :
-    (first ++ second).eval valuation = (first.eval valuation || second.eval valuation) :=
-  List.any_append
-
-@[simp] theorem CNF.eval_nil (valuation : Var → Bool) :
-    CNF.eval [] valuation = true := rfl
-
-@[simp] theorem CNF.eval_cons (clause : Clause Var) (tail : CNF Var) (valuation : Var → Bool) :
-    CNF.eval (clause :: tail) valuation = (clause.eval valuation && tail.eval valuation) := rfl
-
-@[simp] theorem CNF.eval_append (first second : CNF Var) (valuation : Var → Bool) :
-    (first ++ second).eval valuation = (first.eval valuation && second.eval valuation) :=
-  List.all_append
-
-theorem CNF.eval_eq_true (formula : CNF Var) (valuation : Var → Bool) :
-    formula.eval valuation = true ↔ ∀ clause ∈ formula, clause.eval valuation = true :=
-  List.all_eq_true
-
-def Literal.rename (literal : Literal Var) (f : Var → Var') : Literal Var' :=
-  ⟨f literal.var, literal.positive⟩
-
-def Clause.rename (clause : Clause Var) (f : Var → Var') : Clause Var' :=
-  clause.map (fun literal => literal.rename f)
-
-def CNF.rename (formula : CNF Var) (f : Var → Var') : CNF Var' :=
-  formula.map (fun clause => clause.rename f)
-
-@[simp] theorem Literal.eval_rename (literal : Literal Var) (f : Var → Var')
-    (valuation : Var' → Bool) :
-    (literal.rename f).eval valuation = literal.eval (valuation ∘ f) := rfl
-
-@[simp] theorem Clause.eval_rename (clause : Clause Var) (f : Var → Var')
-    (valuation : Var' → Bool) :
-    (clause.rename f).eval valuation = clause.eval (valuation ∘ f) := by
-  induction clause with
-  | nil => rfl
-  | cons literal tail ih =>
-    change ((literal.rename f).eval valuation || (Clause.rename tail f).eval valuation) = _
-    rw [Literal.eval_rename, ih, Clause.eval_cons]
-
-@[simp] theorem CNF.eval_rename (formula : CNF Var) (f : Var → Var')
-    (valuation : Var' → Bool) :
-    (formula.rename f).eval valuation = formula.eval (valuation ∘ f) := by
-  induction formula with
-  | nil => rfl
-  | cons clause tail ih =>
-    change ((clause.rename f).eval valuation && (CNF.rename tail f).eval valuation) = _
-    rw [Clause.eval_rename, ih, CNF.eval_cons]
+variable {Var : Type u}
 
 /-- An original tail, selected on its own side, entails each tail assigned to it
     under the pivot-free background from this step. -/

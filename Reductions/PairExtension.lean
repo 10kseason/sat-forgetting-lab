@@ -1,3 +1,5 @@
+import Formal.CNF
+
 /-! In a nonempty Boolean relation closed under majority, a list of coordinates can
 all be true exactly when each pair can be true together. Signed 2-CNF relations
 satisfy the closure assumption. -/
@@ -97,17 +99,17 @@ theorem extendible_iff_pairwise {ι : Type u} {relation : State ι → Prop}
         · exact Or.inl ⟨hasX i (by simp), hasY i (by simp)⟩
         · exact Or.inl ⟨hasX i (by simp [hi]), hasY i (by simp [hi])⟩
 
-abbrev Literal (ι : Type u) := ι × Bool
-abbrev CNF (ι : Type u) := List (List (Literal ι))
+abbrev Literal (ι : Type u) := SatForgetting.Literal ι
+abbrev CNF (ι : Type u) := SatForgetting.CNF ι
 
-def SatisfiesLiteral {ι : Type u} (x : State ι) (lit : Literal ι) : Prop :=
-  x lit.1 = lit.2
+abbrev SatisfiesLiteral {ι : Type u} (x : State ι) (lit : Literal ι) : Prop :=
+  SatForgetting.Literal.Satisfies lit x
 
-def SatisfiesClause {ι : Type u} (x : State ι) (clause : List (Literal ι)) : Prop :=
-  ∃ lit ∈ clause, SatisfiesLiteral x lit
+abbrev SatisfiesClause {ι : Type u} (x : State ι) (clause : List (Literal ι)) : Prop :=
+  SatForgetting.Clause.Satisfies clause x
 
-def Models {ι : Type u} (formula : CNF ι) (x : State ι) : Prop :=
-  ∀ clause ∈ formula, SatisfiesClause x clause
+abbrev Models {ι : Type u} (formula : CNF ι) (x : State ι) : Prop :=
+  SatForgetting.CNF.Satisfies formula x
 
 def WidthTwo {ι : Type u} (formula : CNF ι) : Prop :=
   ∀ clause ∈ formula, clause.length ≤ 2
@@ -170,7 +172,7 @@ private def literalView {ι : Type u} (x : State ι) : State (Literal ι) :=
 
 private theorem literalView_true {ι : Type u} {x : State ι} {lit : Literal ι} :
     literalView x lit = true ↔ SatisfiesLiteral x lit := by
-  simp [literalView, SatisfiesLiteral]
+  simp [literalView, SatisfiesLiteral, SatForgetting.Literal.Satisfies]
 
 private theorem literalView_majority {ι : Type u} (x y z : State ι) :
     literalView (majorityState x y z) = majorityState (literalView x) (literalView y) (literalView z) := by

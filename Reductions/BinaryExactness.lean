@@ -1,14 +1,16 @@
+import Formal.CNF
+
 /-! The monotone formula built from a CNF agrees with its binary envelope
 exactly when the input CNF is unsatisfiable. The three fresh guards keep
 all width-two tests independent of the encoded CNF. -/
 
 namespace BinaryExactness
 
-abbrev Literal (n : Nat) := Fin n × Bool
-abbrev Formula (n : Nat) := List (List (Literal n))
+abbrev Literal (n : Nat) := SatForgetting.Literal (Fin n)
+abbrev Formula (n : Nat) := SatForgetting.CNF (Fin n)
 
-def Satisfies {n} (φ : Formula n) (σ : Fin n → Bool) : Prop :=
-  ∀ c ∈ φ, ∃ l ∈ c, σ l.1 = l.2
+abbrev Satisfies {n} (φ : Formula n) (σ : Fin n → Bool) : Prop :=
+  SatForgetting.CNF.Satisfies φ σ
 
 inductive Wire (n : Nat) where
   | rail (i : Fin n) (sign : Bool)
@@ -73,6 +75,7 @@ theorem counterexample_iff_sat {n} (φ : Formula n) :
       | true => rfl
     obtain ⟨⟨i, sign⟩, hi, zero⟩ := missing
     refine ⟨(i, sign), hi, ?_⟩
+    change σ i = sign
     cases sign with
     | true => simpa [σ] using zero
     | false =>
@@ -89,6 +92,7 @@ theorem counterexample_iff_sat {n} (φ : Formula n) :
     rintro ⟨_, ⟨i, h⟩ | ⟨c, hc, all⟩⟩
     · cases h
     · obtain ⟨l, hl, e⟩ := hs c hc
+      change σ l.1 = l.2 at e
       simpa [x, e] using all l hl
 
 theorem exact_iff_unsat {n} (φ : Formula n) :
@@ -106,7 +110,7 @@ theorem exact_iff_unsat {n} (φ : Formula n) :
 
 /-- A signed binary clause, including units by repetition. An empty clause
 cannot occur in a representation of encoded, since the all-true input satisfies it. -/
-abbrev PairClause (n : Nat) := (Wire n × Bool) × (Wire n × Bool)
+abbrev PairClause (n : Nat) := SatForgetting.Literal (Wire n) × SatForgetting.Literal (Wire n)
 
 def signedModel {n} (D : List (PairClause n)) (x : Input n) : Prop :=
   ∀ p ∈ D, x p.1.1 = p.1.2 ∨ x p.2.1 = p.2.2

@@ -1,0 +1,45 @@
+name: CI
+
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned elan release
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSL --retry 3 -o elan.tar.gz https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-unknown-linux-gnu.tar.gz
+          echo '0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2  elan.tar.gz' | sha256sum --check
+          tar -xzf elan.tar.gz
+          ./elan-init -y --no-modify-path --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Build Lean and check source coverage
+        run: |
+          lake build
+          failed=0
+          while IFS= read -r -d '' source; do
+            if [[ ! -f ".lake/build/lib/lean/${source%.lean}.olean" ]]; then
+              echo "::error file=$source::Tracked Lean source is missing from the default build"
+              failed=1
+            fi
+          done < <(git ls-files -z -- '*.lean')
+          exit "$failed"
+      - name: Run Python unit tests
+        run: python3 -B -m unittest discover -v
+      - name: Reproduce research checks
+        run: |
+          python3 -B examples.py
+          python3 -B solver_experiment.py
+          python3 -B routes/construction/guarded_dp.py
+          python3 -B routes/obstructions/check.py
+          python3 -B routes/obstructions/check_affine_frontier.py
+          python3 -B routes/query-limit/check.py

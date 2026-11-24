@@ -72,7 +72,4 @@ theorem reference_queries_ge [DecidableEq Assignment] (tree : QueryTree Assignme
   intro row listed
   exact mem_trace_of_distinguishes tree reference row (separates row listed)
 
-#print axioms run_eq_of_agrees_on_reference_trace
-#print axioms reference_queries_ge
-
 end SatForgetting.QueryLimit

@@ -18,6 +18,8 @@ class FrontierDecision:
 
 def conflict_graph(n, background, oriented):
     """The vertices are oriented literals individually feasible in the background."""
+    # The solver traverses the same background for many different assumptions.
+    background = tuple(tuple(clause) for clause in background)
     if solve_2cnf(n, background) is None:
         return None
     graph = {v: set() for v in oriented if solve_2cnf(n, background, (v,)) is not None}

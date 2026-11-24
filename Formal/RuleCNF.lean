@@ -47,7 +47,7 @@ private theorem eval_demandClause (rule : Rule Head (Literal Retained)) (state :
   simp only [demandClause, Clause.eval_append, Clause.eval_rename, Rule.eval]
   change (Clause.eval rule.terminals valuation ||
     (rule.successors.map (fun head => (⟨.inl head, true⟩ : Literal (Sum Head Retained)))).any
-      (fun literal => literal.eval (combine state valuation))) = _
+      (fun literal => Literal.eval literal (combine state valuation))) = _
   rw [List.any_map]
   rfl
 

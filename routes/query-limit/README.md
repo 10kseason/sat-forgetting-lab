@@ -64,12 +64,12 @@ The same transcript argument therefore applies even if queries may use any row o
 ## Reproduce
 
 ```sh
-python -B check.py
-lean QueryTrace.lean
+python -B routes/query-limit/check.py
+lake build
 ```
 
 The Python check uses only the standard library. It compares all retained truth assignments and every nontautological signed binary implicate for 120 punctured functions with $3\le n\le6$. It directly enumerates hidden assignments for 56 of the encodings with $3\le n\le5$.
 
 For $N=8$, the script enumerates all subsets that a deterministic protocol can query on its reference transcript and both terminal answers. After a hit the protocol can answer immediately, so its reference subset and answer determine its pair of errors. The exact convex hull of these error pairs gives the finite randomized optimum for every cap from 0 to 8. A uniformly random permutation of candidate rows makes the average punctured error equal to each individual punctured error, with reference error and cap preserved. The computed errors are $1/2,7/15,3/7,5/13,1/3,3/11,1/5,1/9,0$. Both matching strategies also pass exact rational checks.
 
-The Lean file formalizes reference-transcript indistinguishability and the deterministic length bound for any finite decision tree and list of distinct puncture rows. Direct checking was done with Lean 4.36.0.
+The [Lean module](../../Formal/QueryTrace.lean) formalizes reference-transcript indistinguishability and the deterministic length bound for any finite decision tree and list of distinct puncture rows. Run the commands from the repository root. The default Lake build includes the module.

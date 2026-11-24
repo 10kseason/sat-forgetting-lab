@@ -1,25 +1,33 @@
 # SAT Forgetting Lab
 
+[![CI](https://github.com/10kseason/sat-forgetting-lab/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+
 SAT에서 변수를 지우면서 중간 식을 작게 유지할 수 있을까? 같은 식을 작게 표현하기 어려울 때도 SAT 여부만 빠르게 판정할 수 있을까? 이 저장소는 두 질문을 구별해 실험 코드, 수학적 증명, Lean 정리로 조사한다. **P 대 NP는 미해결이다.**
 
 ### 가장 짧은 실험
 
-`python -B examples.py`의 마지막 예제는 변수쌍 24개와 스위치 하나를 쓴다. 배경을 제외한 함수는 보호된 변수만 쓰는 정확한 CNF로 표현하려면 **16,777,217개 절**이 필요하다. 배경까지 포함한 SAT 문제는 배경의 극대 해 **두 개**를 검사하면 UNSAT임을 알 수 있다. 두 수치는 각각 필요한 표현 크기와 함수 평가 횟수다. [직접 판정 알고리즘과 증명](FRONTIER.md)
+변수쌍 24개와 스위치 하나를 쓴다. **[종이]** 배경을 제외한 함수의 정확한 잔존 변수 CNF에는 **16,777,217개 절**이 필요하다. **[테스트]** `python -B examples.py`는 배경을 포함한 SAT 문제에서 극대 모델 **두 개**를 평가해 UNSAT을 출력한다. [직접 판정 알고리즘과 증명](FRONTIER.md) · [실행 예제](examples.py)
 
-### 무엇을 증명했나
+### 결과와 검증 범위
 
-| 질문 | 결과 |
+**[Lean]**은 링크한 정리를 Lean 커널로 확인한 범위다. **[테스트]**는 유한 입력에서 실행한 검증이다. **[종이]**는 문서에 적힌 수학적 증명과 복잡도 분석이다.
+
+| 질문 | 결과와 근거 |
 |---|---|
-| 서로 의존하는 숨은 변수를 정확히 지울 수 있는가? | 숨은 변수의 음의 리터럴이 절마다 최대 하나인 시스템에서, 상한 규칙의 선택을 열거해 모든 남은 할당에서 정확한 CNF를 얻는다. 입력으로 열거량의 상한을 계산할 수 있고, 그만큼 절이 꼭 필요한 무한 예제도 있다. [투영 정리](THEORY.md) · [Lean 증명](Formal/Emission.lean) |
-| 작은 절들만으로 함수를 전부 설명할 수 있는가? | 방향이 알려진 단조 함수에서는 단위 절 표현의 정확성을 최대 `n+2`번의 평가로 판정한다. 이항 절 표현의 정확성을 판별하는 문제는 이 저장소의 제한된 비순환 입력에서도 coNP-완전하다. [단항·이항 경계](CERTIFICATION.md) · [3-SAT 환원의 Lean 증명](Reductions/BinaryExactness.lean) |
-| 소거 순서에 관계없이 중간 식을 작게 유지할 수 있는가? | 가드가 고정된 수의 포함 사슬로 주어지고 각 절의 나머지에 리터럴이 최대 두 개면, 모든 소거 순서에서 누적 표현 크기가 다항식이다. [증명과 검증기](routes/construction/README.md) |
-| 보조 변수나 입력 질의는 얼마나 필요한가? | 패리티의 CNF 표현에서 절과 보조 변수 사이의 교환관계를 유도했다. 블랙박스에서는 단 한 입력에서 다른 후보들을 구별하는 데 최악에 지수 개 질의가 든다. [보조 변수 하한](routes/obstructions/README.md) · [질의 하한](routes/query-limit/README.md) |
-| 일반 SAT도 풀리는가? | DIMACS CNF를 받는 완전한 판정기를 구현했다. 숨은 부분을 극성 재지정으로 dual-Horn으로 만들고 나머지 변수를 분기한다. 희소하고 연결된 입력군에서 분기 수가 지수적으로 증가한다. [알고리즘과 반례](FRONTIER.md) |
-| 2-SAT 배경에 XOR 조건도 있으면? | 배경의 충돌 그래프에 크기 `k`의 정점 덮개가 있고 XOR 랭크가 `r`이면, 극대 모델마다 최대 `r`개의 함의 성분을 골라 검사하면 충분하다. 한 성분이 여러 입력의 값을 한꺼번에 바꿀 수 있다. [혼합 판정법](routes/affine-frontier/README.md) · [독립 반례 검토](routes/obstructions/affine-frontier.md) |
+| 피벗을 하나씩 정확히 지울 수 있는가? | **[Lean]** 고정 배경 아래에서 각 꼬리를 함의하는 대표 절을 그 꼬리와 같은 극성 쪽에서 골라 소거해도, 남은 모든 할당에서 확장 가능성이 보존된다. 이 결과를 연결된 소거 일정과 절 수 상한에 적용했다. [피벗 소거](Formal/Forgetting.lean) · [소거 일정](Formal/Schedule.lean) · [크기 상한](Formal/Size.lean) |
+| 서로 의존하는 숨은 변수를 정확히 지울 수 있는가? | **[Lean]** 숨은 변수의 음의 리터럴이 절마다 최대 하나인 시스템에서, 도달 집합과 정책 열거 범위를 증명서로 주면 출력 CNF가 모든 남은 할당에서 정확하다. **[종이]** 정책 열거 횟수의 상한과 그만큼 절이 필요한 무한 입력군을 증명했다. **[테스트]** 작은 투영 결과와 숨은 변수의 확장을 완전탐색과 비교했다. [출력 정리](Formal/Emission.lean) · [투영 분석](THEORY.md) · [검증 코드](test_research.py) |
+| 단항·이항 절로 함수를 전부 설명할 수 있는가? | **[Lean]** 단조 함수의 단항 표현 정확성 조건과, 3-SAT을 부호 있는 2-CNF 표현 가능성에 연결하는 의미론적 환원을 확인했다. **[종이]** 단항 검사는 최대 `n+2`번의 함수 평가를 사용한다. 이항 표현 가능성은 해당 비순환 입력에서 coNP-완전하다. [단항 증명](Reductions/UnaryExactness.lean) · [이항 환원](Reductions/BinaryExactness.lean) · [복잡도 분석](CERTIFICATION.md) |
+| CNF를 전개하지 않고 SAT을 판정할 수 있는가? | **[Lean]** 만족 가능한 2-CNF 배경과 방향이 주어진 단조 함수에서는, 배경의 쌍 충돌 그래프에서 극대 독립집합만 검사해도 충분하다. **[종이]** 정점 덮개 크기가 `k`이면 최대 `2^k`번의 함수 평가로 판정한다. **[테스트]** 작은 입력에서 완전탐색과 비교했다. [판정 동치](Reductions/FrontierDecision.lean) · [알고리즘](FRONTIER.md) · [검증 코드](test_frontier.py) |
+| 소거 순서에 관계없이 중간 식을 작게 유지할 수 있는가? | **[종이]** 가드가 고정된 수의 포함 사슬로 주어지고 각 절의 본체에 리터럴이 최대 두 개면, 가드 변수를 모두 보호한 채 본체 변수만 소거하는 모든 순서에서 누적 크기가 다항식이다. **[테스트]** 작은 식에서 소거 단계별 확장 가능성을 비교했다. [증명과 검증기](routes/construction/README.md) |
+| 패리티를 표현하려면 보조 변수나 절이 얼마나 필요한가? | **[종이]** 패리티를 CNF로 표현할 때 절 수와 보조 변수 수의 교환관계를 증명했다. **[테스트]** 작은 사례에서 소거 순서와 중간 식을 검증했다. [보조 변수 하한과 검증기](routes/obstructions/README.md) |
+| 함수에 대한 질의는 얼마나 필요한가? | **[Lean]** 한 입력만 다른 후보와 구별하려면 결정 트리가 그 입력을 질의해야 한다. **[종이]** 명시적 CNF 인코딩을 숨긴 멤버십 오라클 모델에서 결정적·무작위 최적 질의 하한을 증명했다. **[테스트]** 작은 사례의 동일한 이항 외피와 무작위 최적 오차를 확인했다. [결정 트리 정리](Formal/QueryTrace.lean) · [질의 하한과 검증기](routes/query-limit/README.md) |
+| 일반 DIMACS CNF에서 판정기는 어떻게 동작하는가? | **[종이]** 지정한 극성에서 dual-Horn이 되는 숨은 부분을 계산하고 나머지 변수를 분기하면, 예산 제한 없이 SAT 여부를 판정한다. 이 구현의 고정 분기 전략에 지수 개 패턴이 필요한 입력군을 증명했다. **[테스트]** 임의의 작은 CNF를 완전탐색과 비교하고 반례의 최소 크기를 실행했다. [알고리즘과 반례](FRONTIER.md) · [검증 코드](test_solver.py) |
+| 2-CNF 배경에 XOR 조건도 있으면? | **[종이]** 주어진 방향에서 단조인 함수와 XOR 랭크 `r`에 대해, 배경의 극대 모델마다 함의 그래프의 강결합 성분을 `r`개 이하로 고른 부분집합을 검사한다. 크기 `k`의 정점 덮개를 사용하면 잔존 변수 `n`개에 대해 전체 후보는 최대 $2^k\sum_{j=0}^{r}\binom{n}{j}$개다. **[테스트]** 유한 사례를 완전탐색과 비교하고 독립 검증기로 점검했다. [혼합 판정법](routes/affine-frontier/README.md) · [독립 검토](routes/obstructions/affine-frontier.md) |
+| 선택형 XOR 제약도 쌍별 검사로 판정할 수 있는가? | **[Lean]** 세 단계 이상인 경로에서, 리터럴 발생마다 두 식을 연결하는 인코딩에 쌍별로 가능하지만 전체로는 불가능한 선택 집합이 존재할 조건은 원래 CNF의 만족 가능성과 같다. **[종이]** 모든 선택 집합에 대해 쌍별 검사가 충분한지 판별하는 문제는 선택기당 식 하나일 때 다항시간에 풀리며, 두 식을 허용하면 빈 배경에서도 coNP-완전하다. **[테스트]** 랭크 판정법과 인코딩을 작은 입력에서 검증했다. [의미론적 환원](Formal/GuardedPath.lean) · [랭크와 복잡도 분석](GUARDED-AFFINE.md) · [검증 코드](test_guarded_affine.py) |
 
 ### 재현
 
-Python 3.10 이상과 Lean 4.36.0을 사용한다. Python은 표준 라이브러리만 쓰며 Lean 프로젝트에는 추가 패키지가 없다.
+저장소 루트에서 실행한다. Python 3.10 이상과 Lean 4.36.0을 사용한다. Python은 표준 라이브러리만 쓰며 Lean 프로젝트에는 추가 패키지가 없다.
 
 ```sh
 python -B -m unittest discover -v
@@ -30,8 +38,8 @@ lake build
 
 일반 DIMACS 파일은 `python -B solve_cnf.py input.cnf`로 실행한다. SAT이면 모델을 출력하고 종료 코드 10을, UNSAT이면 20을 반환한다. 선택한 `--max-patterns` 예산이 먼저 소진되면 UNKNOWN을 반환한다.
 
+`lake build`에는 질의 추적 정리도 들어 있다. CI는 기본 빌드에서 Git으로 추적되는 각 Lean 소스의 컴파일 결과가 생성됐는지 확인한다. [CI 설정](.github/workflows/ci.yml)
+
 ### 출처와 검증 범위
 
 별도로 진행한 유한 그래프 회로 실험에서 적은 수의 경계 입력만으로 후보를 검사한 경험이 블랙박스 질의 실험의 동기였다. 질의 노트의 **58**은 그 비교 예산이다. SAT 예제와 입력군은 여기의 생성기로 만들었다. Lean 코드는 이 저장소의 모듈과 Lean 자체 라이브러리만 불러온다. [재현 명령과 검증 범위](VERIFICATION.md)
-
-The [technical note](THEORY.md) gives an exact CNF projection algorithm and its policy-count bound. The [decision note](FRONTIER.md) describes a different algorithm whose cost depends on a vertex cover of the background conflict graph. Lean checks the named semantic theorems. Asymptotic complexity bounds use the written arguments; exhaustive tests cover finite inputs. No literature-priority claim is made.

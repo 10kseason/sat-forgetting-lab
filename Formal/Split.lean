@@ -33,7 +33,7 @@ private theorem Clause.eval_parts (clause : Clause (Option Var)) (valuation : Va
     cases var with
     | none => cases polarity <;> cases pivot <;> simp [Clause.parts, ClauseParts.eval, Literal.eval]
     | some var =>
-      simp only [Clause.parts, ClauseParts.eval, Clause.eval_cons, Literal.eval, extend_some]
+      simp only [Clause.parts, ClauseParts.eval, Clause.eval_cons, Literal.eval]
       ac_rfl
 
 private def PivotCNF.place (input : PivotCNF Var) (parts : ClauseParts Var) : PivotCNF Var :=

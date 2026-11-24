@@ -11,7 +11,6 @@ python -B routes/obstructions/check.py
 python -B routes/obstructions/check_affine_frontier.py
 python -B routes/query-limit/check.py
 lake build
-lean routes/query-limit/QueryTrace.lean
 ```
 
 | Check | Coverage |
@@ -23,8 +22,11 @@ lean routes/query-limit/QueryTrace.lean
 | Projection obstructions | 1,748 parity elimination orders, 254 prefix checkpoint sets and 746 implication-background orders. The general arbitrary-helper bound is a counting proof in the route note. |
 | Query bounds | 120 function/envelope checks, 56 explicit hidden-CNF projections, and exact finite minimax checks for eight exceptional inputs. |
 | Affine decision frontier | 12,288 complete two-variable combinations, 600 seeded mixed instances and an independent checker covering 42,851 affine searches. |
+| Guarded parity equations | All 256 two-bit row families against nine backgrounds, 350 seeded cases with duplicates, minimal obstruction checks, occurrence-path reductions on small CNFs, and bounded-occurrence and matching checks. The independent oracle intersects explicit sets of hidden truth assignments. |
 
-The Lean build checks single-pivot semantics, iteration and cumulative caps, simultaneous static policies, reachability, CNF materialization, the signed binary-recognition reduction, unary exactness and maximal-support decision. [The emission theorem](Formal/Emission.lean) takes certificates for reachability, constant goals and coverage of choices on each goal's dependency cone. It does not certify the Python program that constructs those data. The query trace theorem has a separate Lean entry point above. Runtime bounds, the coding lower bound for parity, and the rank argument for affine frontier search are written proofs. Numerical experiments are finite checks.
+The default Lean build checks single-pivot semantics, iteration and cumulative caps, simultaneous static policies, reachability, CNF materialization, the signed binary-recognition reduction, unary exactness, maximal-support decision, the membership-query trace theorem and the semantic occurrence-path reduction. [The emission theorem](Formal/Emission.lean) assumes certificates for reachability, constant goals and coverage of choices on each goal's dependency cone. Python certificate generation is tested separately. Runtime bounds, the coding lower bound for parity and the affine rank arguments are written proofs. Numerical experiments are finite checks.
+
+On each public push the CI performs a fresh default build, checks that each tracked Lean source has a corresponding compiled module, runs unittest discovery and runs the standalone research checks above. It uses a standard Ubuntu runner without artifact or cache uploads. [Workflow](.github/workflows/ci.yml) · [GitHub runner billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 
 For the larger guarded UNSAT example, `solver_experiment.py` deliberately caps the search and reports UNKNOWN. The following reproduces the completed 131,072-pattern run for the smallest size.
 

@@ -31,3 +31,25 @@ The DIMACS solver detects complementary pairs of signed ternary clauses. Each pa
 On a connected component, let $S$ count occurrences awarding a point for agreement, and let $w_{uv}$ be the number awarding a point for disagreement minus the number awarding one for agreement. An assignment's total score is exactly $S+\sum_{uv\text{ crossing}} w_{uv}$. On $v$ vertices a cut contains at most $\lfloor v^2/4\rfloor$ distinct pairs. An upper bound is therefore $S$ plus that many largest positive weights, or all positive weights if there are fewer. Satisfying all $t$ triples would score exactly $2t$. A strictly smaller upper bound proves UNSAT for that component and for any CNF containing it. Unpaired clauses need no special treatment. [Certificate](nae_cut.py) · [Normal DIMACS entry point](solve_cnf.py)
 
 Linear positive NAE-3 remains NP-complete even on the four-regular class with a supplied decomposition into four perfect matchings. In a connected four-regular linear instance on $v$ vertices, $t=4v/3$ and all pair weights are one. Once $v\ge12$ the unrestricted pair-capacity bound is already at least $2t$. Thus this particular certificate handles a dense obstruction while leaving sparse hard instances in play. [Darmann, Döcker and Dorn, Theorem 3.6](https://arxiv.org/html/2412.03395)
+
+## Finding the same obstruction inside a sparse formula
+
+For a set of $s$ vertices, count only the $t$ positive NAE triples wholly inside it. If the entire extracted positive hypergraph is linear and has maximum degree four, the detector returns a certificate whenever some set satisfies $2t>\lfloor s^2/4\rfloor$. This search takes linear work at fixed degree.
+
+Each vertex in the subset has internal triple degree at most $\min(4,\lfloor(s-1)/2\rfloor)$. These degrees sum to $3t$. For $s\le6$ or $s=8$ the bound excludes a strict violation. For $s\ge11$, $2t\le8s/3\le s^2/4$. The three remaining sizes give the algorithm.
+
+| $s$ | Internal triples | How to find the set |
+|---|---|---|
+| 7 | Exactly 7 | Every pair is present. Choose a vertex and six neighbors. |
+| 9 | 11 or 12 | The missing-pair graph has even degrees and at most three edges. It is empty or a triangle. A vertex of internal pair degree eight has all eight neighbors inside. |
+| 10 | Exactly 13 | The internal pair degrees sum to 78. They are even and at most eight, so nine vertices have degree eight and one has degree six. Choose a degree-eight vertex, its eight neighbors, and its single missing member at graph distance two. |
+
+In each case the chosen vertex has at least six neighbors sharing at least four common neighbors with it. The preliminary neighborhood filter therefore preserves a witness. There are at most eight neighbors in the whole positive pair graph. For four supplied perfect matchings, only size nine is possible: the seven triples at size seven intersect pairwise, and each matching contributes at most three internal triples at size ten. [Implementation](nae_cut.py) · [Independent controls](routes/matching-balance/README.md) · [Packing antecedents](RELATED-WORK.md)
+
+## Exact decision near the complete-graph cut capacity
+
+For a positive linear triple system on $n$ vertices, write $G$ for its graph of occurring pairs and let $t$ be the number of triples. A coloring splits all triples exactly when its cut in $G$ has size $2t$. If one side has $w$ vertices and $h$ **missing** pairs cross, this cut has size $w(n-w)-h$. Any solution must therefore have $h\le D=\lfloor n^2/4\rfloor-2t$. Negative $D$ immediately refutes the input.
+
+Build a spanning forest of the missing-pair graph, with $c$ components. Enumerate which at most $D$ forest edges cross. Each pattern assigns colors throughout a component up to a common flip. It determines the exact number $h$ of crossing missing pairs, including nonforest edges. Test $w(n-w)=2t+h$ by solving this integer quadratic. For an integer root, use subset-sum dynamic programming on the two possible side sizes of each component. Complementing the whole coloring exchanges the two roots. A successful trace gives an actual coloring. Exhausting all patterns certifies UNSAT.
+
+There are at most $\sum_{j=0}^{\min(D,n-c)}\binom{n-c}{j}$ patterns, with polynomial work per pattern. This is polynomial for fixed $D$. On unrelated four-regular inputs $D$ grows quadratically with the number of vertices. The default DIMACS path tries this method on pure positive linear NAE when $0\le D\le4$ and the entire search fits both 10,000 patterns and any lower caller budget. The separate API accepts other budgets. [Algorithm](near_cut.py) · [Truth tables and budget checks](test_near_cut.py)

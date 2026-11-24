@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from itertools import combinations
+from nae_cut import positive_nae_triples
 
 
 # Bit k is set precisely when physical assignment k has the indicated bit set.
@@ -181,14 +182,5 @@ def from_cnf(n, clauses):
     """Recognize complete positive NAE pairs in normalized DIMACS clauses."""
     if n < 12 or n % 12 or 3*len(clauses) != 8*n:
         return None
-    triples = []
-    for clause in clauses:
-        if len(clause) != 3 or any((lit > 0) != (clause[0] > 0) for lit in clause):
-            return None
-        if clause[0] > 0:
-            if tuple(-lit for lit in clause) not in clauses:
-                return None
-            triples.append(tuple(lit-1 for lit in clause))
-    if 2*len(triples) != len(clauses):
-        return None
-    return contract(n, triples)
+    triples = positive_nae_triples(clauses)
+    return contract(n, triples) if triples is not None else None

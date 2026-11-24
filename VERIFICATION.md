@@ -10,6 +10,9 @@ python -B routes/construction/guarded_dp.py
 python -B routes/obstructions/check.py
 python -B routes/obstructions/check_affine_frontier.py
 python -B routes/query-limit/check.py
+python -B routes/matching-balance/independent.py
+python -B routes/matching-balance/order12.py
+python -B routes/matching-balance/verify15.py
 lake build
 ```
 
@@ -26,6 +29,7 @@ lake build
 | Single-clause promotion | Every three-bit relation expressible by a 2-CNF, with each signed full-width clause. The oracle checks all triples of distinct models, and checks each returned obstruction against the original formula. Longer signed inputs, saturation order and a jointly binary counterexample are covered separately. |
 | Probing and cuts | Two-pin probes recover the hidden pins and stall on both parities of the triangular prism. Signed clause systems are checked against truth tables. The 15-vertex Steiner instance is run to completion under both default and legacy settings. |
 | Twelve-vertex substitution | The Lean kernel evaluates the six block states and verifies both model maps and inverses. Python checks finite SAT and UNSAT sources, four perfect matchings, incidence linearity, signed ports, and inversion on shuffled unlabeled triples. Five-level 9,216- and 12,288-variable inputs go through the default solver. |
+| Independent four-round controls | Four sizes of generated controls and an independent complete NAE search. The 12-point enumeration reproduces all three resolved types. Gray-code truth tables verify every full and single-round-deletion coloring count of the 13,933 stored 15-point representatives. The longer catalogue generator is documented in the route. |
 
 The default Lean build checks single-pivot semantics, iteration and cumulative caps, simultaneous static policies, reachability, CNF materialization, the signed binary-recognition reduction, unary exactness, maximal-support decision, the membership-query trace theorem and the semantic occurrence-path reduction. [The emission theorem](Formal/Emission.lean) assumes certificates for reachability, constant goals and coverage of choices on each goal's dependency cone. Python certificate generation is tested separately. Runtime bounds, the coding lower bound for parity and the affine rank arguments are written proofs. Numerical experiments are finite checks.
 

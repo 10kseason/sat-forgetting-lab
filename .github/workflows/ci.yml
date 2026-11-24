@@ -43,3 +43,7 @@ jobs:
           python3 -B routes/obstructions/check.py
           python3 -B routes/obstructions/check_affine_frontier.py
           python3 -B routes/query-limit/check.py
+          python3 -B routes/matching-balance/independent.py
+          python3 -B routes/matching-balance/order12.py
+          python3 -B routes/matching-balance/verify15.py
+          python3 -B routes/matching-balance/dual.py

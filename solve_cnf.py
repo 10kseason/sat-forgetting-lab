@@ -8,7 +8,8 @@ import sys
 
 from forgetting import HiddenCNF, canonical, cnf_value
 from gf2 import equations_in_cnf, one_solution, reduce_system
-from nae_cut import cut_obstruction
+from nae_cut import cut_obstruction, positive_nae_triples
+from near_cut import solve_near_cut
 from anonymous_blocks import contract, from_cnf
 from pivot_elimination import first_non_growing, minimal, recover
 from two_sat import solve_2cnf
@@ -46,7 +47,7 @@ def hidden_orientation(n, clauses):
     return hidden, preferred
 
 
-def shortcut(n, clauses, use_affine, use_cut=True):
+def shortcut(n, clauses, use_affine, use_cut=True, max_patterns=None):
     if () in clauses:
         return SearchResult("UNSAT", None, (), 0, "empty clause")
     if all(len(c) <= 2 for c in clauses):
@@ -63,6 +64,16 @@ def shortcut(n, clauses, use_affine, use_cut=True):
                 return SearchResult("SAT", witness, (), 0, "affine witness")
     if use_cut and cut_obstruction(clauses) is not None:
         return SearchResult("UNSAT", None, (), 0, "NAE cut bound")
+    if use_cut and 0 <= n*n//4 - len(clauses) <= 4:
+        triples = positive_nae_triples(clauses)
+        if triples is not None:
+            pairs = {tuple(sorted(p)) for edge in triples for p in combinations(edge,2)}
+            if len(pairs) == 3*len(triples):
+                cap = 10000 if max_patterns is None else min(max_patterns,10000)
+                close = solve_near_cut(n,triples,cap,skip_over_budget=True)
+                if close.status != "UNKNOWN":
+                    return SearchResult(close.status,close.assignment,(),close.patterns,
+                                        "NAE complement forest")
     return None
 
 
@@ -125,7 +136,7 @@ def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True, u
     clauses = minimal(original) if use_elimination else original
     trace = []
     while True:
-        answer = shortcut(n, clauses, use_affine, use_cut)
+        answer = shortcut(n, clauses, use_affine, use_cut, max_patterns)
         if answer is not None:
             break
         step = first_non_growing(clauses) if use_elimination else None

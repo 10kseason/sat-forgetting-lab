@@ -18,7 +18,7 @@ class ClauseCheck:
         return self.reduced is None or len(self.reduced) <= 2
 
 
-def _clause(n, literals):
+def checked_clause(n, literals):
     clause = tuple(literals)
     if any(not 1 <= abs(lit) <= n for lit in clause):
         raise ValueError("literal index out of range")
@@ -47,13 +47,12 @@ def check_clause(n, background, clause):
         raise ValueError("negative variable count")
     base = []
     for raw in background:
-        raw = tuple(raw)
-        if len(raw) > 2:
-            raise ValueError("background clause wider than two")
-        clean = _clause(n, raw)
+        clean = checked_clause(n, raw)
         if clean is not None:
+            if len(clean) > 2:
+                raise ValueError("background clause wider than two")
             base.append(clean)
-    return _check(n, base, _clause(n, clause))
+    return _check(n, base, checked_clause(n, clause))
 
 
 @dataclass(frozen=True)
@@ -75,7 +74,7 @@ def promote(n, clauses):
     background = []
     pending = []
     for index, raw in enumerate(clauses):
-        clause = _clause(n, raw)
+        clause = checked_clause(n, raw)
         if clause is None:
             continue
         if len(clause) <= 2:

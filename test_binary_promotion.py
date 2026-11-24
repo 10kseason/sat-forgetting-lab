@@ -68,6 +68,7 @@ class BinaryPromotionTests(unittest.TestCase):
         self.assertEqual(models(rows, stuck), models(rows, [(1,2)]))
 
     def test_zero_variables_and_validation(self):
+        self.assertEqual(check_clause(2, [(1, 1, 1)], (2,)).reduced, (2,))
         self.assertEqual(check_clause(0, [()], ()).reduced, ())
         self.assertEqual(promote(0, []).remaining, ())
         for n, base, clause in [(-1, [], []), (3, [(1,2,3)], []),

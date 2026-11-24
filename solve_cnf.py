@@ -8,6 +8,7 @@ import sys
 
 from forgetting import HiddenCNF, canonical, cnf_value
 from gf2 import equations_in_cnf, one_solution, reduce_system
+from nae_cut import cut_obstruction
 from pivot_elimination import first_non_growing, minimal, recover
 from two_sat import solve_2cnf
 
@@ -44,7 +45,7 @@ def hidden_orientation(n, clauses):
     return hidden, preferred
 
 
-def shortcut(n, clauses, use_affine):
+def shortcut(n, clauses, use_affine, use_cut=True):
     if () in clauses:
         return SearchResult("UNSAT", None, (), 0, "empty clause")
     if all(len(c) <= 2 for c in clauses):
@@ -59,6 +60,8 @@ def shortcut(n, clauses, use_affine):
             witness = one_solution(n, basis)
             if cnf_value(clauses, witness):
                 return SearchResult("SAT", witness, (), 0, "affine witness")
+    if use_cut and cut_obstruction(clauses) is not None:
+        return SearchResult("UNSAT", None, (), 0, "NAE cut bound")
     return None
 
 
@@ -83,7 +86,7 @@ def branch(n, clauses, max_patterns):
     return SearchResult("UNSAT", None, rest, tested, "backdoor")
 
 
-def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True):
+def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True, use_cut=True):
     if n < 0 or (max_patterns is not None and max_patterns < 1):
         raise ValueError("invalid variable count or search budget")
     original = set()
@@ -97,7 +100,7 @@ def solve(n, raw, max_patterns=None, *, use_affine=True, use_elimination=True):
     clauses = minimal(original) if use_elimination else original
     trace = []
     while True:
-        answer = shortcut(n, clauses, use_affine)
+        answer = shortcut(n, clauses, use_affine, use_cut)
         if answer is not None:
             break
         step = first_non_growing(clauses) if use_elimination else None
@@ -151,6 +154,7 @@ def main():
     parser.add_argument("--max-patterns", type=int, help="stop search after this many assignments")
     parser.add_argument("--no-affine", action="store_true", help="skip parity-block recognition")
     parser.add_argument("--no-elimination", action="store_true", help="skip non-growing resolution")
+    parser.add_argument("--no-cut", action="store_true", help="skip the signed NAE cut bound")
     args = parser.parse_args()
     try:
         if args.file is None:
@@ -159,7 +163,7 @@ def main():
             with args.file.open(encoding="utf-8") as source:
                 n, clauses = read_dimacs(source)
         result = solve(n, clauses, args.max_patterns, use_affine=not args.no_affine,
-                       use_elimination=not args.no_elimination)
+                       use_elimination=not args.no_elimination, use_cut=not args.no_cut)
     except (ValueError, OSError) as error:
         parser.error(str(error))
     print(f"c method {result.method} pivots {len(result.eliminated)} retained {len(result.retained)}"

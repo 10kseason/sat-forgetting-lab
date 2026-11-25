@@ -32,6 +32,8 @@ The compressed TSV contains one representative per fifteen-point type. Its first
 
 An optional complete solver sweep checks the 13,933 DIMACS-equivalent formulas against these counts and validates every returned assignment. The ternary incidence witness certified one SAT type. Backdoor enumeration decided 13,823 other SAT types and all 109 UNSAT types. The maximum number of assignments tried by that route was 474 on SAT and 1,024 on UNSAT. Run `python -B routes/matching-balance/verify15.py --solver` to reproduce the method counts. [Solver sweep](verify15.py)
 
+For a kernel check of the 109 UNSAT representatives, run `python -B routes/matching-balance/verify15.py --lean-unsat`. Each row supplies fifteen propositional variables and two clauses per triple, one requiring a true vertex and one requiring a false vertex. Lean's `grind` tactic constructs a proof that those forty premises imply a contradiction. CI checks all 109 proofs on each push. This verifies the negative rows individually. Completeness of the catalogue comes from the separate enumeration above.
+
 ## A single miss does not generalize
 
 Take $k$ copies of the nine-point affine plane. In the fourth round of each block open the same triple $(a_i,b_i,c_i)$ and replace it by $(a_i,b_i,c_{i+1})$ cyclically. The result is connected, linear and still has four perfect matchings. Among colorings satisfying the first three rounds, the minimum number of violations in the fourth is **$k+(k\bmod 2)$**.

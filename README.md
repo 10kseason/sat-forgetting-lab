@@ -2,7 +2,9 @@
 
 [![CI](https://github.com/10kseason/sat-forgetting-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/10kseason/sat-forgetting-lab/actions/workflows/ci.yml)
 
-**P 대 NP는 미해결이다.** 이 저장소는 SAT에서 변수를 정확히 지울 때 식이 얼마나 커지는지, 그리고 특정 구조를 이용해 SAT를 어떻게 판정할 수 있는지 조사한다.
+**P 대 NP는 미해결이다.** 이 저장소는 SAT에서 변수를 정확히 지울 때 식이 얼마나 커지는지, 그리고 특정 구조를 이용해 SAT를 어떻게 판정할 수 있는지 조사한다. [클레이 수학연구소의 문제 설명](https://www.claymath.org/millennium/p-vs-np/)
+
+**[종이]** 현재의 일반 SAT 판정기에는 변수가 $4m+1$개일 때 적어도 $2^{3m}$개 배정을 검사하는 입력군이 있다. 이 입력군에서는 어떤 변수부터 분기하는지가 결정적이다. 선택기 하나를 먼저 고정하면 두 경우 모두 가우스 소거로 풀린다. [입력군과 실행 시간 증명](FRONTIER.md#a-family-that-defeats-the-combined-implementation)
 
 ### 네 라운드 NAE
 
@@ -10,7 +12,7 @@
 
 - **블록마다 6대6.** **[종이]** 모든 해에서 12정점 블록마다 두 색이 6개씩 나타난다는 약속 아래 양의 NAE-3-SAT은 NP-난해하다. 환원은 선형성과 네 완전 매칭을 보존하며 정점과 삼중항 수를 각각 네 배로 늘린다. **[Lean]** 주어진 배선에서 원래 해와 변환한 해의 일대일 대응, 그리고 블록별 균형을 확인했다. [환원과 출처](MATCHING-BALANCE.md) · [모델 대응 정리](Formal/BalancedSubstitution.lean)
 - **한 정점씩 바꾸는 색 균형.** **[Lean]** 정점이 $n\ge15$개인 3-균일 4-정규 입력에서는 주어진 적법한 색칠을 한 정점씩 적법하게 바꿔, 한 색의 크기가 $7n/15$에서 $8n/15$ 사이인 색칠에 도달한다. **[종이]** 연결된 $15k$정점 네 라운드 예에는 색의 크기가 $7k$와 $8k$인 해 두 개만 있어 이 범위가 최선이다. **[Lean]** 그 예에 쓰인 열린 15정점 블록의 32,768개 배정과 연결 규칙을 확인했다. [일반 뒤집기 정리](Formal/RegularRecolor.lean) · [블록 정리](Formal/MatchingImbalance.lean) · [최선인 범위의 증명](routes/matching-balance/IMBALANCE.md)
-- **15정점 카탈로그.** **[테스트]** 기본 판정기는 네 라운드 설계 13,933개의 전수 검산과 모두 일치했다. UNSAT은 109개였다. GF(3) 입사행렬 증인으로 SAT 한 건을 판정했고, 나머지 13,932개는 남은 변수를 분기하는 경로로 판정했다. [카탈로그와 전체 판정 재현](routes/matching-balance/README.md#complete-finite-catalogues) · [검증 코드](routes/matching-balance/verify15.py)
+- **15정점 카탈로그.** **[테스트]** 어느 두 정점도 같은 묶음에 두 번 들어가지 않는 네 라운드 설계를 셌다. 정점 이름과 라운드 순서만 다른 설계를 한 번씩 세면 13,933개다. 기본 판정기는 이 동형류 전체에서 전수 검산과 일치했다. GF(3) 입사행렬 증인으로 SAT 한 건을 판정했고, 나머지 13,932개는 남은 변수를 분기하는 경로로 판정했다. **[Lean]** UNSAT으로 판정한 109개 설계 각각에서, 삼중항 20개를 동시에 만족하는 색칠이 존재한다고 가정해 모순을 유도했다. [카탈로그와 전체 판정 재현](routes/matching-balance/README.md#complete-finite-catalogues) · [검증 코드](routes/matching-balance/verify15.py)
 
 ### 가장 짧은 실험
 
@@ -50,7 +52,7 @@ lake build
 
 일반 DIMACS 파일은 `python -B solve_cnf.py input.cnf`로 실행한다. SAT이면 모델을 출력하고 종료 코드 10을, UNSAT이면 20을 반환한다. 선택한 `--max-patterns` 예산이 먼저 소진되면 UNKNOWN을 반환한다. `--no-cut`은 전체 성분 컷, 유도 부분집합 컷과 포리스트 판정을 건너뛴다. `--no-blocks`는 익명 블록 복원을 건너뛴다.
 
-카탈로그의 색칠 수는 `python -B routes/matching-balance/verify15.py`로 재검산한다. `--solver`를 붙이면 기본 판정기로 전부 다시 검사한다. [후속 실험과 실행 명령](routes/matching-balance/README.md#reproduction)
+카탈로그의 색칠 수는 `python -B routes/matching-balance/verify15.py`로 재검산한다. `--solver`를 붙이면 기본 판정기로 전부 다시 검사한다. `--lean-unsat`을 붙이면 해가 없는 109개 설계 각각에서 두 색으로 칠할 수 없음을 Lean으로 증명한다. [후속 실험과 실행 명령](routes/matching-balance/README.md#reproduction)
 
 **[Lean]** 12정점 블록은 3비트 입력 여덟 개에서 원래 삼중항의 위반 여부를 내부 위반 수로 보존한다. 내부 검사 하나를 위반하면서 모든 적법한 블록 상태와 해밍 거리가 6인 배정도 확인했다. [손상 블록 분석](routes/matching-balance/DAMAGE.md) · [유한 정리](Formal/BlockDamage.lean)
 
@@ -58,4 +60,4 @@ lake build
 
 ### 출처와 검증 범위
 
-별도로 진행한 유한 그래프 회로 실험에서 적은 수의 경계 입력만으로 후보를 검사한 경험이 블랙박스 질의 실험의 동기였다. 질의 노트의 **58**은 그 비교 예산이다. SAT 예제와 입력군은 여기의 생성기로 만들었다. Lean 코드는 이 저장소의 모듈과 Lean 자체 라이브러리만 불러온다. [관련 문헌과 비교](RELATED-WORK.md) · [검토 기록](REVIEW.md) · [재현 명령과 검증 범위](VERIFICATION.md)
+별도로 진행한 유한 그래프 회로 실험에서 적은 수의 경계 입력만으로 후보를 검사한 경험이 블랙박스 질의 실험의 동기였다. 질의 노트의 **58**은 그 비교 예산이다. SAT 예제와 입력군은 여기의 생성기로 만들었다. 연구 마감본의 Git 파일 해시를 이전 그래프 실험의 두 체크아웃과 대조했을 때, 파일 전체가 일치한 것은 Lean 버전을 지정하는 `lean-toolchain` 하나였다. Lean 코드는 이 저장소의 모듈과 Lean 자체 라이브러리만 불러온다. [관련 문헌과 비교](RELATED-WORK.md) · [검토 기록](REVIEW.md) · [재현 명령과 검증 범위](VERIFICATION.md)

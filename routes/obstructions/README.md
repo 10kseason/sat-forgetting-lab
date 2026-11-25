@@ -30,7 +30,7 @@ $$
 M\ \ge\ \frac{r}{2}\,2^{n/r}.
 $$
 
-Balanced prefix blocks use at most $r2^{\lceil n/r\rceil+1}$ clauses, within a factor of eight of the lower bound for every such $k$. Polynomial-size explicit CNFs of this kind require $\Omega(n/\log n)$ helper bits, and linear-size explicit CNFs require $\Omega(n)$ helper bits. The proof uses the random-order satisfiability-coding method of Paturi, Pudlák and Zane.
+Balanced prefix blocks use at most $r2^{\lceil n/r\rceil+1}$ clauses, within a factor of eight of the lower bound for every such $k$. Polynomial-size explicit CNFs of this kind require $\Omega(n/\log n)$ helper bits, and linear-size explicit CNFs require $\Omega(n)$ helper bits. The proof uses the random-order satisfiability-coding method of Paturi, Pudlák and Zane. Emdin and coauthors already give the balanced prefix construction and the same exponential term in a parity lower bound. The proof here obtains the stated prefactor over the full displayed parameter range. The comparison to earlier bounds and their adjustable parameter is recorded in the literature note. [Emdin et al., Eq. (1) and Theorem 1](https://drops.dagstuhl.de/storage/00lipics/lipics-vol241-mfcs2022/LIPIcs.MFCS.2022.47/LIPIcs.MFCS.2022.47.pdf) · [Detailed comparison](../../RELATED-WORK.md#parity-encodings-and-the-size-bound)
 
 Remove tautologies and repeated literals. For each correct-parity assignment $x$, choose one witness $y$. Flipping a single $x_i$ makes the CNF false with that same $y$. Some clause therefore has the original literal on $x_i$ as its only true literal. Choose one such critical clause for each $x_i$ and write $t_i(x)$ for its number of data variables. A clause can be chosen for at most one data variable at a given assignment, so $M\ge n$.
 

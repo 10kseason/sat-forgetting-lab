@@ -54,7 +54,7 @@ def verify(path, check_solver=False, check_lean_unsat=False):
     all_bits = (1 << (1<<15))-1
     allowed = {(a,b,c): (cols[a]^cols[b]) | (cols[b]^cols[c])
                for a,b,c in combinations(range(15),3)}
-    seen = set()
+    profiles = set()
     histogram = Counter()
     misses = Counter()
     methods = Counter()
@@ -63,8 +63,6 @@ def verify(path, check_solver=False, check_lean_unsat=False):
     with gzopen(path,"rt",encoding="ascii",newline="") as stream:
         for index, row in enumerate(DictReader(stream, delimiter="\t")):
             key = tuple(row[f"class{i}"] for i in range(4))
-            assert key not in seen
-            seen.add(key)
             masks, groups, pairs = [], [], set()
             for group in key:
                 triples = [tuple(int(ch,16) for ch in e) for e in group.split(".")]
@@ -97,12 +95,19 @@ def verify(path, check_solver=False, check_lean_unsat=False):
                 route = (result.status, result.method)
                 methods[route] += 1
                 max_trials[route] = max(max_trials.get(route, 0), result.assignments_tested)
+            round_profiles = []
             for omit in range(4):
                 partial = all_bits
                 for j,mask in enumerate(masks):
                     if j!=omit:
                         partial &= mask
-                assert partial.bit_count() == int(row[f"drop{omit}"])
+                partial_count = partial.bit_count()
+                assert partial_count == int(row[f"drop{omit}"])
+                # Relabeling preserves the counts after restoring each possible one or two triples.
+                restored = [partial & allowed[e] for e in groups[omit]]
+                one = tuple(sorted(m.bit_count() for m in restored))
+                two = tuple(sorted((a & b).bit_count() for a, b in combinations(restored, 2)))
+                round_profiles.append((partial_count, one, two))
                 if not full:
                     # How many restored triples must be left out to regain a model?
                     for removed in range(1,6):
@@ -117,8 +122,12 @@ def verify(path, check_solver=False, check_lean_unsat=False):
                         if possible:
                             misses[removed] += 1
                             break
-    assert len(seen) == 13933 and histogram[0] == 109
-    print("verified designs",len(seen),"SAT",len(seen)-histogram[0],"UNSAT",histogram[0])
+            profile = (count, tuple(sorted(round_profiles)))
+            assert profile not in profiles, f"indistinguishable catalogue rows at row {index}"
+            profiles.add(profile)
+    assert len(profiles) == 13933 and histogram[0] == 109
+    print("verified designs",len(profiles),"SAT",len(profiles)-histogram[0],"UNSAT",histogram[0])
+    print("pairwise distinct coloring profiles", len(profiles))
     print("minimum missed restored triples on UNSAT design/round pairs",sorted(misses.items()))
     if check_solver:
         print("default solver routes",sorted(methods.items()))

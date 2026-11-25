@@ -53,6 +53,10 @@ The axiom audit uses Lean's transitive dependency report for imported project th
 
 During integration, the optional catalogue solver sweep gained a check that every SAT result supplies a full witness. Its maximum assignment counts were 474 for SAT by branching and 1,024 for UNSAT by branching. A deliberately missing SAT witness failed the new check. The separate Lean audit proved the 109 negative rows using only propositional extensionality as a reported axiom, and rejected an attempted contradiction for a satisfiable triple. [Catalogue checks](routes/matching-balance/verify15.py)
 
+All 13,933 rows have distinct coloring profiles under vertex and round renaming. The verifier rejected a copy of a row with its vertices and rounds permuted. A separate check recomputed the full and round-deletion counts, then compared the thirteen candidate pairs left by those counts with NetworkX 3.5's VF2++ algorithm. Its incidence graphs contained fifteen point vertices, twenty triple vertices and four round vertices, with the verified deletion count attached to each round. All thirteen pairs were nonisomorphic. A relabeled copy of row 1078 admitted an isomorphism. The repository verifier uses Python's standard library. [Coloring profiles and catalogue definition](routes/matching-balance/README.md#complete-finite-catalogues)
+
+As an external solver check, CaDiCaL 2.1.2 read the 40-clause DIMACS encoding of every representative. All 13,824 returned colorings satisfied the original triples. On the 109 negative inputs, `--plain --lrat --no-binary` produced textual certificates. A separate unit-propagation replay checked 3,484 clause additions across those certificates and derived the empty clause in every case. CI reproduces the negative results directly from the triples with Lean. [Catalogue verifier](routes/matching-balance/verify15.py)
+
 For the larger guarded UNSAT example, `solver_experiment.py` deliberately caps the search and reports UNKNOWN. The following reproduces the completed 131,072-pattern run for the smallest size.
 
 ```sh
